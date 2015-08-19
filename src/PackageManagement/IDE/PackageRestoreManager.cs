@@ -317,8 +317,13 @@ namespace NuGet.PackageManagement
             await ThrottledCopySatelliteFilesAsync(hashSetOfMissingPackageReferences, packageRestoreContext, nuGetProjectContext);
 
             packageRestoreResult &= restoreResults.All(r => r);
-          
-            return new PackageRestoreResult(packageRestoreResult);
+
+            if (packageRestoreResult)
+            {
+                packageRestoreContext.SetRestored();
+            }
+
+            return new PackageRestoreResult(packageRestoreContext.WasRestored);
         }
 
         /// <summary>

@@ -98,10 +98,6 @@ namespace NuGet.CommandLine
                 {
                     var results = await Task.WhenAll(v3RestoreTasks);
                     restoreResult &= results.All(r => r);
-                    foreach (var result in results)
-                    {
-                        restoreResult &= result;
-                    }
                 }
             }
 
