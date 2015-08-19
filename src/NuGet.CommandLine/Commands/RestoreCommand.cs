@@ -48,7 +48,7 @@ namespace NuGet.CommandLine
         public override async Task ExecuteCommandAsync()
         {
             bool restoreResult = true;
-            
+
             _msbuildDirectory = MsBuildUtility.GetMsbuildDirectory(MSBuildVersion);
 
             if (!string.IsNullOrEmpty(PackagesDirectory))
@@ -97,14 +97,15 @@ namespace NuGet.CommandLine
                 if (v3RestoreTasks.Count > 0)
                 {
                     var results = await Task.WhenAll(v3RestoreTasks);
-                    foreach(var result in results)
+                    restoreResult &= results.All(r => r);
+                    foreach (var result in results)
                     {
                         restoreResult &= result;
                     }
                 }
             }
 
-            if(!restoreResult)
+            if (!restoreResult)
             {
                 throw new CommandLineException();
             }

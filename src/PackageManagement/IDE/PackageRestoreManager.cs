@@ -314,18 +314,10 @@ namespace NuGet.PackageManagement
 
             packageRestoreContext.Token.ThrowIfCancellationRequested();
 
-            var CopyResults = await ThrottledCopySatelliteFilesAsync(hashSetOfMissingPackageReferences, packageRestoreContext, nuGetProjectContext);
+            await ThrottledCopySatelliteFilesAsync(hashSetOfMissingPackageReferences, packageRestoreContext, nuGetProjectContext);
 
-            foreach(var result in restoreResults)
-            {
-                packageRestoreResult &= result;
-            }
-
-            foreach (var result in CopyResults)
-            {
-                packageRestoreResult &= result;
-            }
-
+            packageRestoreResult &= restoreResults.All(r => r);
+          
             return new PackageRestoreResult(packageRestoreResult);
         }
 
@@ -383,12 +375,12 @@ namespace NuGet.PackageManagement
         /// that dequeue from the ConcurrentQueue and perform copying of satellite files. So, this method should
         /// pre-populate the queue and must not enqueued to by other methods
         /// </summary>
-        private static Task<bool[]> ThrottledCopySatelliteFilesAsync(HashSet<Packaging.PackageReference> packageReferences,
+        private static Task ThrottledCopySatelliteFilesAsync(HashSet<Packaging.PackageReference> packageReferences,
             PackageRestoreContext packageRestoreContext,
             INuGetProjectContext nuGetProjectContext)
         {
             var packageReferencesQueue = new ConcurrentQueue<Packaging.PackageReference>(packageReferences);
-            var tasks = new List<Task<bool>>();
+            var tasks = new List<Task>();
             for (var i = 0; i < Math.Min(packageRestoreContext.MaxNumberOfParallelTasks, packageReferences.Count); i++)
             {
                 tasks.Add(Task.Run(() => CopySatelliteFilesRunnerAsync(packageReferencesQueue, packageRestoreContext, nuGetProjectContext)));
@@ -448,19 +440,15 @@ namespace NuGet.PackageManagement
         /// performs copying of satellite files
         /// Note that this method should only Dequeue from the concurrent queue and not Enqueue
         /// </summary>
-        private static async Task<bool> CopySatelliteFilesRunnerAsync(ConcurrentQueue<Packaging.PackageReference> packageReferencesQueue,
+        private static async Task CopySatelliteFilesRunnerAsync(ConcurrentQueue<Packaging.PackageReference> packageReferencesQueue,
             PackageRestoreContext packageRestoreContext,
             INuGetProjectContext nuGetProjectContext)
         {
             Packaging.PackageReference currentPackageReference = null;
-            var copyResult = true;
             while (packageReferencesQueue.TryDequeue(out currentPackageReference))
             {
                 var result = await packageRestoreContext.PackageManager.CopySatelliteFilesAsync(currentPackageReference.PackageIdentity, nuGetProjectContext, packageRestoreContext.Token);
-                copyResult &= result;
             }
-
-            return copyResult;
         }
     }
 }
