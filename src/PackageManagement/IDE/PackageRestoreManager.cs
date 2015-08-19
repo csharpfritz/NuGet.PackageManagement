@@ -457,7 +457,7 @@ namespace NuGet.PackageManagement
             while (packageReferencesQueue.TryDequeue(out currentPackageReference))
             {
                 var result = await packageRestoreContext.PackageManager.CopySatelliteFilesAsync(currentPackageReference.PackageIdentity, nuGetProjectContext, packageRestoreContext.Token);
-                copyResult &= true;
+                copyResult &= result;
             }
 
             return copyResult;
