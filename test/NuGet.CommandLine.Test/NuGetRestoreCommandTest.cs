@@ -1383,6 +1383,7 @@ EndProject";
             }
         }
 
+        // return code should be 1 when restore failed 
         [Fact]
         public void RestoreCommand_FromPackagesConfigFileFailed()
         {
